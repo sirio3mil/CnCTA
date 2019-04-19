@@ -1,5 +1,7 @@
 <?php
 
+namespace CnCTA\Controllers;
+
 /**
  * GNU Public License 3.0
  * Copyright (C) 2014 Gary Coleman <cybershark@gmail.com>
