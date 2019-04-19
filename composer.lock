@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d4af4171bad11ffbe11a344005dbbd98",
+    "content-hash": "9cc618a407b7fe29039b5efd74bb3812",
     "packages": [
         {
             "name": "devster/ubench",
@@ -53,6 +53,90 @@
                 "micro"
             ],
             "time": "2017-11-02T16:41:47+00:00"
+        },
+        {
+            "name": "limitium/tiberium-alliances-parser-distributed",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/limitium/tiberium-alliances-parser-distributed.git",
+                "reference": "04dd442d1ba27e2f9e513964a2bb3d1ec6de7529"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/limitium/tiberium-alliances-parser-distributed/zipball/04dd442d1ba27e2f9e513964a2bb3d1ec6de7529",
+                "reference": "04dd442d1ba27e2f9e513964a2bb3d1ec6de7529",
+                "shasum": ""
+            },
+            "require": {
+                "limitium/zmq": "dev-master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "limitium\\TAPD\\": "src"
+                }
+            },
+            "authors": [
+                {
+                    "name": "limitium",
+                    "email": "limitium@gmail.com"
+                }
+            ],
+            "support": {
+                "source": "https://github.com/limitium/tiberium-alliances-parser-distributed/tree/master",
+                "issues": "https://github.com/limitium/tiberium-alliances-parser-distributed/issues"
+            },
+            "time": "2016-05-16T19:28:03+00:00"
+        },
+        {
+            "name": "limitium/zmq",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/limitium/zmq.git",
+                "reference": "1d556d0296009218c8c515c52a3c1b83bb07e372"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/limitium/zmq/zipball/1d556d0296009218c8c515c52a3c1b83bb07e372",
+                "reference": "1d556d0296009218c8c515c52a3c1b83bb07e372",
+                "shasum": ""
+            },
+            "require": {
+                "ext-zmq": "*",
+                "php": ">=5.4.0",
+                "psr/log": "~1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "limitium\\zmq\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "limitium",
+                    "email": "limitium@gmail.com"
+                }
+            ],
+            "description": "Brokers for ZeroMQ from TA:map project used for distributed parsing system.",
+            "keywords": [
+                "0mq",
+                "broker",
+                "message",
+                "psr-3",
+                "queue",
+                "zmq"
+            ],
+            "time": "2015-05-05T12:01:13+00:00"
         },
         {
             "name": "php-curl-class/php-curl-class",
@@ -120,6 +204,53 @@
                 "xml"
             ],
             "time": "2019-03-07T05:40:40+00:00"
+        },
+        {
+            "name": "psr/log",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "c4421fcac1edd5a324fda73e589a5cf96e52ffd0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/c4421fcac1edd5a324fda73e589a5cf96e52ffd0",
+                "reference": "c4421fcac1edd5a324fda73e589a5cf96e52ffd0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Log\\": "Psr/Log/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https://github.com/php-fig/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "time": "2018-11-21T13:42:00+00:00"
         }
     ],
     "packages-dev": [
@@ -1597,9 +1728,10 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": {
-        "php-curl-class/php-curl-class": 20
+        "php-curl-class/php-curl-class": 20,
+        "limitium/tiberium-alliances-parser-distributed": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

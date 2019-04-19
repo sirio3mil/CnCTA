@@ -1,11 +1,19 @@
 {
   "name": "sirio3mil/cncta",
-  "description": "Internet movie database's website scraper in PHP",
+  "description": "tiberium alliances parser in PHP",
   "type": "library",
+  "minimum-stability": "dev",
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/limitium/tiberium-alliances-parser-distributed"
+    }
+  ],
   "require": {
     "php": ">=7.2",
     "php-curl-class/php-curl-class": "@dev",
-    "devster/ubench": "2.0.0"
+    "devster/ubench": "2.0.0",
+    "limitium/tiberium-alliances-parser-distributed": "dev-master"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0"
