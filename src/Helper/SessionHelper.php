@@ -1,8 +1,7 @@
 <?php
 
-namespace CnCTA\Controllers;
+namespace CnCTA\Helper;
 
-use Curl\Curl;
 use ErrorException;
 use Exception;
 
@@ -25,17 +24,14 @@ use Exception;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * */
-class CnCTAController
+class SessionHelper
 {
 
-    /** @var CnCTAController */
+    /** @var SessionHelper */
     protected static $instance;
 
     /** @var string */
-    protected $user;
-
-    /** @var string */
-    protected $password;
+    protected $username;
 
     /** @var string */
     protected $agent;
@@ -45,9 +41,6 @@ class CnCTAController
 
     /** @var string */
     protected $sessionId;
-
-    /** @var string */
-    protected $sessionServer;
 
     /** @var string */
     protected $referrer;
@@ -60,20 +53,47 @@ class CnCTAController
 
     const SESSION_MIDDLE_URL = '/Presentation/Service.svc/ajaxEndpoint/';
 
-    public function __construct()
+    public function __construct(string $username)
     {
-        // change to suitable location, tmp path assumes apache server
-        $this->cookie = apache_getenv("TMP") . '\\' . md5($this->user) . '.txt';
-        $this->agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.114 Safari/537.36';
+        $this->username = $username;
+        $this->agent = implode(' ', [
+            'Mozilla/5.0 (Windows NT 6.3; WOW64)',
+            'AppleWebKit/537.36 (KHTML, like Gecko)',
+            'Chrome/35.0.1916.114 Safari/537.36'
+        ]);
+        $this->cookie = implode(DIRECTORY_SEPARATOR, [
+            dirname(dirname(__DIR__)),
+            'data',
+            'cookies',
+            md5($this->username) . '.txt'
+        ]);
     }
 
     /**
-     * @return Curl
+     * @param string $cookie
+     * @return SessionHelper
+     */
+    public function setCookie(string $cookie): SessionHelper
+    {
+        $this->cookie = $cookie;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCookie(): string
+    {
+        return $this->cookie;
+    }
+
+    /**
+     * @return CurlHelper
      * @throws ErrorException
      */
     protected function getCurlInstance()
     {
-        $curl = new Curl();
+        $curl = new CurlHelper();
         $curl->setUserAgent($this->agent);
         $curl->setCookieFile($this->cookie);
         $curl->setCookieJar($this->cookie);
@@ -85,72 +105,91 @@ class CnCTAController
     }
 
     /**
-     * @return CnCTAController
+     * @return SessionHelper
      */
-    public static function getInstance(): CnCTAController
+    public static function getInstance(): SessionHelper
     {
         if (!isset(self::$instance)) {
-            self::$instance = new CnCTAController ();
+            self::$instance = new SessionHelper ();
         }
         return self::$instance;
     }
 
     /**
-     * @param string $user
      * @param string $password
      * @return mixed
      * @throws ErrorException
      */
-    public function login(string $user, string $password)
+    public function login(string $password)
     {
-        $this->user = $user;
-        $this->password = $password;
-        $loginFields = [
-            'spring-security-redirect' => '',
-            'id' => '',
-            'timezone' => '2',
-            'j_username' => $this->user,
-            'j_password' => $this->password,
-            '_web_remember_me' => ''
-        ];
         $curl = $this->getCurlInstance();
         $curl->setOpts([
             CURLOPT_FOLLOWLOCATION => true
         ]);
-        return $curl->post('https://www.tiberiumalliances.com/j_security_check', $loginFields);
+        $curl->post('https://www.tiberiumalliances.com/login/j_security_check', [
+            'spring-security-redirect' => '',
+            'id' => '',
+            'timezone' => '2',
+            'j_username' => $this->username,
+            'j_password' => $password,
+            '_web_remember_me' => ''
+        ]);
+        return $curl->getResponse();
     }
 
     /**
      * @throws ErrorException
      * @throws Exception
      */
-    public function LastWorld(): void
+    public function setSessionId(): void
     {
         $curl = $this->getCurlInstance();
         $curl->setReferer('https://www.tiberiumalliances.com/login/auth');
+        $curl->setOpts([
+            CURLOPT_FOLLOWLOCATION => true
+        ]);
         $curl->get('https://www.tiberiumalliances.com/game/launch');
-        if (empty($curl->response)) {
-            throw new Exception('LastWorld Curl result was empty');
-        } elseif ($curl->error) {
-            throw new Exception($curl->errorMessage, $curl->errorCode);
-        }
-        if (preg_match('/sessionId\" value=\"([^"]+)"/', $curl->response, $match)) {
+        $response = $curl->getResponse();
+        if (preg_match('/sessionId\" value=\"([^"]+)"/', $response, $match)) {
             $this->sessionId = $match[1];
         } else {
             throw new Exception('Did not find sessionId');
         }
         // grab last used server
-        if (preg_match('/([^"]+)\/index\.aspx/', $curl->response, $match)) {
-            $this->sessionServer = $match[1];
+        if (preg_match('/([^"]+)\/index\.aspx/', $response, $match)) {
             $this->referrer = $match[0];
-            $this->sessionUrl = $this->sessionServer . CnCTAController::SESSION_MIDDLE_URL;
+            $this->sessionUrl = $match[1] . SessionHelper::SESSION_MIDDLE_URL;
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getSessionId(): string
+    {
+        return $this->sessionId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getReferrer(): string
+    {
+        return $this->referrer;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSessionUrl(): string
+    {
+        return $this->sessionUrl;
     }
 
     /**
      * @throws Exception
      */
-    public function OpenSession(): void
+    public function setSessionKey(): void
     {
         $data = [
             'session' => $this->sessionId,
@@ -173,6 +212,14 @@ class CnCTAController
             throw new Exception('invalid Session ID:' . $result->i);
         }
         $this->sessionKey = $result->i;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSessionKey(): string
+    {
+        return $this->sessionKey;
     }
 
     /**
@@ -210,11 +257,6 @@ class CnCTAController
             CURLOPT_VERBOSE => true
         ]);
         $curl->post($this->sessionUrl . $endpoint, $data);
-        if (empty($curl->response)) {
-            throw new Exception('getData Curl result was empty');
-        } elseif ($curl->error) {
-            throw new Exception($curl->errorMessage, $curl->errorCode);
-        }
-        return json_decode($curl->response);
+        return json_decode($curl->getResponse());
     }
 }
