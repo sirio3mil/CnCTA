@@ -55,6 +55,11 @@ class CnCTAController
     /** @var string */
     protected $sessionKey;
 
+    /** @var string */
+    protected $sessionUrl;
+
+    const SESSION_MIDDLE_URL = '/Presentation/Service.svc/ajaxEndpoint/';
+
     public function __construct()
     {
         // change to suitable location, tmp path assumes apache server
@@ -128,21 +133,24 @@ class CnCTAController
             throw new Exception('LastWorld Curl result was empty');
         } elseif ($curl->error) {
             throw new Exception($curl->errorMessage, $curl->errorCode);
+        }
+        if (preg_match('/sessionId\" value=\"([^"]+)"/', $curl->response, $match)) {
+            $this->sessionId = $match[1];
         } else {
-            if (preg_match('/sessionId\" value=\"([^"]+)"/', $curl->response, $match)) {
-                $this->sessionId = $match[1];
-            } else {
-                throw new Exception('Did not find sessionId');
-            }
-            // grab last used server
-            if (preg_match('/([^"]+)\/index\.aspx/', $curl->response, $match)) {
-                $this->sessionServer = $match[1];
-                $this->referrer = $match[0];
-            }
+            throw new Exception('Did not find sessionId');
+        }
+        // grab last used server
+        if (preg_match('/([^"]+)\/index\.aspx/', $curl->response, $match)) {
+            $this->sessionServer = $match[1];
+            $this->referrer = $match[0];
+            $this->sessionUrl = $this->sessionServer . CnCTAController::SESSION_MIDDLE_URL;
         }
     }
 
-    public function OpenSession()
+    /**
+     * @throws Exception
+     */
+    public function OpenSession(): void
     {
         $data = [
             'session' => $this->sessionId,
@@ -151,63 +159,62 @@ class CnCTAController
             'version' => -1,
             'platformId' => 1
         ];
-        $url = $this->sessionServer . '/Presentation/Service.svc/ajaxEndpoint/';
         $invalid = "00000000-0000-0000-0000-000000000000";
-        $result = $this->getData($url, 'OpenSession', $data);
+        $result = $this->getData('OpenSession', $data);
         $tries = 0;
         $maxTries = 2;
         while (($result->i == $invalid) && ($tries < $maxTries)) {
-            sleep(2); //Lets not flood the server
-            $result = $this->getData($url, 'OpenSession', $data);
+            sleep(2); // Lets not flood the server
+            $result = $this->getData('OpenSession', $data);
             $this->sessionKey = $result->i;
             $tries++;
         }
-
         if ($result->i === $invalid) {
-            print 'invalid Session ID:' . $result->i;
-            exit();
-
-        } else {
-
-            return $this->sessionKey = $result->i;
+            throw new Exception('invalid Session ID:' . $result->i);
         }
+        $this->sessionKey = $result->i;
     }
 
-    public function prepData($endpoint, $data = array())
+    /**
+     * @param string $endpoint
+     * @param array $data
+     * @return mixed
+     * @throws ErrorException
+     * @throws Exception
+     */
+    public function getResponse(string $endpoint, array $data = [])
     {
-        $data = array_merge(array('session' => $this->sessionKey), $data);
-        $url = $this->sessionServer . '/Presentation/Service.svc/ajaxEndpoint/';
-        return $this->getData($url, $endpoint, $data);
+        $data = array_merge(['session' => $this->sessionKey], $data);
+        return $this->getData($endpoint, $data);
     }
 
-    protected function getData($url = Null, $endpoint, $data)
+    /**
+     * @param string $endpoint
+     * @param array $data
+     * @return mixed
+     * @throws ErrorException
+     * @throws Exception
+     */
+    protected function getData(string $endpoint, array $data)
     {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url . $endpoint);
-        curl_setopt($ch, CURLOPT_REFERER, $this->referrer);
-//        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-//        curl_setopt($ch, CURLOPT_USERAGENT, $this->agent);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json; charset=utf-8", "Cache-Control: no-cache", "Pragma: no-cache", "X-Qooxdoo-Response-Type: application/json"));
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data, JSON_UNESCAPED_SLASHES));
-//        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->cookie);
-//        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->cookie);
-        $result = curl_exec($ch);
-        if (empty($result)) {
-            print('getData Curl result was empty');
-            exit();
-        } elseif ($result === FALSE) {
-            $errno = curl_errno($ch);
-            $errormessage = curl_strerror($errno);
-            print($errno . ': \t' . $errormessage);
-        } else {
-            $results = json_decode($result);
-            return $results;
+        $curl = $this->getCurlInstance();
+        $curl->setReferer($this->referrer);
+        $curl->setHeaders([
+            'Content-Type' => 'application/json; charset=utf-8',
+            'Cache-Control' => 'no-cache',
+            'Pragma' => 'no-cache',
+            'X-Qooxdoo-Response-Type' => 'application/json'
+        ]);
+        $curl->setConnectTimeout(2);
+        $curl->setOpts([
+            CURLOPT_VERBOSE => true
+        ]);
+        $curl->post($this->sessionUrl . $endpoint, $data);
+        if (empty($curl->response)) {
+            throw new Exception('getData Curl result was empty');
+        } elseif ($curl->error) {
+            throw new Exception($curl->errorMessage, $curl->errorCode);
         }
-        curl_close($ch);
+        return json_decode($curl->response);
     }
-
 }
