@@ -6,14 +6,14 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/limitium/tiberium-alliances-parser-distributed"
+      "url": "https://github.com/sirio3mil/tiberium-alliances-parser-distributed"
     }
   ],
   "require": {
     "php": ">=7.2",
     "php-curl-class/php-curl-class": "@dev",
     "devster/ubench": "2.0.0",
-    "limitium/tiberium-alliances-parser-distributed": "dev-master"
+    "sirio3mil/tiberium-alliances-parser-distributed": "dev-master"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0"
