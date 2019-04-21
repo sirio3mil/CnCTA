@@ -4,6 +4,7 @@
 namespace CnCTA\Helper;
 
 
+use Curl\CaseInsensitiveArray;
 use Curl\Curl;
 use Exception;
 
@@ -51,7 +52,14 @@ class CurlHelper extends Curl
         if ($this->verbose) {
             $trace = debug_backtrace();
             $caller = $trace[2];
-            file_put_contents($this->path . DIRECTORY_SEPARATOR . $caller['function'] . '.html', $this->response);
+            /** @var CaseInsensitiveArray $headers */
+            $headers = $this->getResponseHeaders();
+            $fileContent = '';
+            foreach ($headers as $key => $value) {
+                $fileContent .= "{$key}: {$value}" . PHP_EOL;
+            }
+            $fileContent .= $this->response;
+            file_put_contents($this->path . DIRECTORY_SEPARATOR . $caller['function'] . '.txt', $fileContent);
             print_r($caller['function'] . PHP_EOL);
         }
     }
