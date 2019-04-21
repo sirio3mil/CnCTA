@@ -51,11 +51,15 @@ class SessionHelper
     /** @var string */
     protected $sessionUrl;
 
+    /** @var boolean */
+    protected $verbose;
+
     const SESSION_MIDDLE_URL = '/Presentation/Service.svc/ajaxEndpoint/';
 
     public function __construct(string $username)
     {
         $this->username = $username;
+        $this->verbose = false;
         $this->agent = implode(' ', [
             'Mozilla/5.0 (Windows NT 6.3; WOW64)',
             'AppleWebKit/537.36 (KHTML, like Gecko)',
@@ -67,6 +71,16 @@ class SessionHelper
             'cookies',
             md5($this->username) . '.txt'
         ]);
+    }
+
+    /**
+     * @param bool $verbose
+     * @return SessionHelper
+     */
+    public function setVerbose(bool $verbose): SessionHelper
+    {
+        $this->verbose = $verbose;
+        return $this;
     }
 
     /**
@@ -94,6 +108,7 @@ class SessionHelper
     protected function getCurlInstance()
     {
         $curl = new CurlHelper();
+        $curl->setVerbose($this->verbose);
         $curl->setUserAgent($this->agent);
         $curl->setCookieFile($this->cookie);
         $curl->setCookieJar($this->cookie);

@@ -9,6 +9,28 @@ use Exception;
 
 class CurlHelper extends Curl
 {
+    /** @var boolean */
+    protected $verbose;
+
+    /** @var string */
+    protected $path;
+
+    /**
+     * @param bool $verbose
+     * @return CurlHelper
+     */
+    public function setVerbose(bool $verbose): CurlHelper
+    {
+        $this->verbose = $verbose;
+        return $this;
+    }
+
+    public function setCookieFile($cookie_file)
+    {
+        $this->path = dirname($cookie_file);
+        return parent::setCookieFile($cookie_file);
+    }
+
     /**
      * @return mixed
      * @throws Exception
@@ -20,6 +42,17 @@ class CurlHelper extends Curl
         } elseif ($this->error) {
             throw new Exception($this->errorMessage, $this->errorCode);
         }
+        $this->saveResponse();
         return $this->response;
+    }
+
+    protected function saveResponse(): void
+    {
+        if ($this->verbose) {
+            $trace = debug_backtrace();
+            $caller = $trace[2];
+            file_put_contents($this->path . DIRECTORY_SEPARATOR . $caller['function'] . '.html', $this->response);
+            print_r($caller['function'] . PHP_EOL);
+        }
     }
 }
