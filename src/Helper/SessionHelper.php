@@ -51,7 +51,7 @@ class SessionHelper
     /** @var string */
     protected $sessionUrl;
 
-    /** @var boolean */
+    /** @var bool */
     protected $verbose;
 
     const SESSION_MIDDLE_URL = '/Presentation/Service.svc/ajaxEndpoint/';
