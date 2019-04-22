@@ -15,7 +15,7 @@ class SessionHelperTest extends TestCase
     public function testLogin()
     {
         $sessionHelper = new SessionHelper();
-        $sessionHelper->login('sirio3mil@gmail.com', 'Imagin@Rey0717');
+        $sessionHelper->login('sirio3mil@gmail.com', '*************');
         $this->assertFileExists($sessionHelper->getCookie());
     }
 
@@ -23,7 +23,7 @@ class SessionHelperTest extends TestCase
     {
         $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
         $sessionHelper->setVerbose(true);
-        $sessionHelper->login('Imagin@Rey0717');
+        $sessionHelper->login('****************');
         $sessionHelper->setSessionId();
         $this->assertNotEmpty($sessionHelper->getSessionId());
         $this->assertNotEmpty($sessionHelper->getReferrer());
@@ -33,7 +33,7 @@ class SessionHelperTest extends TestCase
     public function testSetSessionKey()
     {
         $sessionHelper = new SessionHelper();
-        $sessionHelper->login('sirio3mil@gmail.com', 'Imagin@Rey0717');
+        $sessionHelper->login('sirio3mil@gmail.com', '**************');
         $sessionHelper->setSessionKey();
         $this->assertNotEmpty($sessionHelper->getSessionKey());
     }
