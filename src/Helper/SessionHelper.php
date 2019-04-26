@@ -2,6 +2,7 @@
 
 namespace CnCTA\Helper;
 
+use Curl\CaseInsensitiveArray;
 use ErrorException;
 use Exception;
 
@@ -42,7 +43,7 @@ class SessionHelper
     /** @var string */
     protected $sessionId;
 
-    /** @var string */
+    /** @var string|null */
     protected $referrer;
 
     /** @var string */
@@ -53,6 +54,18 @@ class SessionHelper
 
     /** @var bool */
     protected $verbose;
+
+    /** @var string|null */
+    protected $state;
+
+    /** @var string|null */
+    protected $fid;
+
+    /** @var string|null */
+    protected $execution;
+
+    /** @var string|null */
+    protected $loginUrl;
 
     const SESSION_MIDDLE_URL = '/Presentation/Service.svc/ajaxEndpoint/';
 
@@ -120,14 +133,97 @@ class SessionHelper
     }
 
     /**
-     * @return SessionHelper
+     * @return bool
      */
-    public static function getInstance(): SessionHelper
+    public function resetSessionCookies(): bool
     {
-        if (!isset(self::$instance)) {
-            self::$instance = new SessionHelper ();
+        if (file_exists($this->getCookie())) {
+            return unlink($this->getCookie());
         }
-        return self::$instance;
+        return true;
+    }
+
+    public function setSessionCookies()
+    {
+        $curl = $this->getCurlInstance();
+        $curl->setOpts([
+            CURLOPT_FOLLOWLOCATION => true
+        ]);
+        $curl->get('https://www.tiberiumalliances.com/');
+        $curl->close();
+    }
+
+    public function register()
+    {
+        $this->state = null;
+        $this->execution = null;
+        $this->loginUrl = null;
+        $curl = $this->getCurlInstance();
+        $curl->setOpts([
+            CURLOPT_FOLLOWLOCATION => true
+        ]);
+        $curl->get('https://www.tiberiumalliances.com/login/auth');
+        /** @var CaseInsensitiveArray $headers */
+        $headers = $curl->getRequestHeaders();
+        if ($headers->offsetExists('request-line')) {
+            $this->setLoginUrl($headers);
+            $initReferer = SessionHelper::extractUrlPart($this->loginUrl, 'initref');
+            $this->state = SessionHelper::extractUrlPart($initReferer, 'state');
+            $this->execution = SessionHelper::extractUrlPart($this->loginUrl, 'execution');
+        }
+        $curl->close();
+    }
+
+    /**
+     * @param CaseInsensitiveArray $headers
+     */
+    protected function setLoginUrl(CaseInsensitiveArray $headers): void
+    {
+        $this->loginUrl = null;
+        if ($headers->offsetExists('request-line')) {
+            $this->loginUrl = 'https://signin.ea.com' . substr($headers->offsetGet('request-line'),4);
+        }
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLoginUrl(): ?string
+    {
+        return $this->loginUrl;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getExecution(): ?string
+    {
+        return $this->execution;
+    }
+
+    /**
+     * @param string $url
+     * @param string $part
+     * @return string|null
+     */
+    protected static function extractUrlPart(string $url, string $part): ?string
+    {
+        $urlParts = parse_url($url);
+        if ($urlParts) {
+            parse_str($urlParts['query'], $output);
+            if (!empty($output[$part])) {
+                return $output[$part];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getState(): ?string
+    {
+        return $this->state;
     }
 
     /**
@@ -138,18 +234,26 @@ class SessionHelper
     public function login(string $password)
     {
         $curl = $this->getCurlInstance();
+        $curl->setReferer($this->getLoginUrl());
         $curl->setOpts([
             CURLOPT_FOLLOWLOCATION => true
         ]);
-        $curl->post('https://www.tiberiumalliances.com/login/j_security_check', [
-            'spring-security-redirect' => '',
-            'id' => '',
-            'timezone' => '2',
-            'j_username' => $this->username,
-            'j_password' => $password,
-            '_web_remember_me' => ''
+        $curl->post($this->getLoginUrl(), [
+            'email' => $this->username,
+            'password' => $password,
+            'country' => 'ES',
+            'phoneNumber' => '',
+            'passwordForPhone' => '',
+            '_rememberMe' => '',
+            'rememberMe' => '',
+            '_eventId' => 'submit',
+            'gCaptchaResponse' => '',
+            'isPhoneNumberLogin' => false,
+            'isIncompletePhone' => ''
         ]);
-        return $curl->getResponse();
+        var_dump($curl->getResponseHeaders());
+        var_dump($curl->getResponse());
+        $curl->close();
     }
 
     /**
@@ -186,9 +290,9 @@ class SessionHelper
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getReferrer(): string
+    public function getReferrer(): ?string
     {
         return $this->referrer;
     }

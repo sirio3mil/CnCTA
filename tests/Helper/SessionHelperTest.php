@@ -12,29 +12,36 @@ class SessionHelperTest extends TestCase
 
     }
 
-    public function testLogin()
-    {
-        $sessionHelper = new SessionHelper();
-        $sessionHelper->login('sirio3mil@gmail.com', '*************');
-        $this->assertFileExists($sessionHelper->getCookie());
-    }
-
-    public function testSetSessionId()
+    public function testResetSessionCookies()
     {
         $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
-        $sessionHelper->setVerbose(true);
-        $sessionHelper->login('****************');
-        $sessionHelper->setSessionId();
-        $this->assertNotEmpty($sessionHelper->getSessionId());
-        $this->assertNotEmpty($sessionHelper->getReferrer());
-        $this->assertNotEmpty($sessionHelper->getSessionUrl());
+        $sessionHelper->resetSessionCookies();
+        $this->assertFileNotExists($sessionHelper->getCookie());
     }
 
-    public function testSetSessionKey()
+    public function testSetSessionCookies()
     {
-        $sessionHelper = new SessionHelper();
-        $sessionHelper->login('sirio3mil@gmail.com', '**************');
-        $sessionHelper->setSessionKey();
-        $this->assertNotEmpty($sessionHelper->getSessionKey());
+        $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
+        $sessionHelper->setSessionCookies();
+        $this->assertFileExists($sessionHelper->getCookie());
+        $this->assertRegexp('/JSESSIONID/', file_get_contents($sessionHelper->getCookie()));
+    }
+
+    public function testRegister()
+    {
+        $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
+        $sessionHelper->setSessionCookies();
+        $sessionHelper->register();
+        $this->assertNotEmpty($sessionHelper->getState());
+        $this->assertNotEmpty($sessionHelper->getExecution());
+        $this->assertNotEmpty($sessionHelper->getLoginUrl());
+    }
+
+    public function testLogin()
+    {
+        $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
+        $sessionHelper->setSessionCookies();
+        $sessionHelper->register();
+        $sessionHelper->login('#LeNtilla1');
     }
 }
