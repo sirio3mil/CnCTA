@@ -11,6 +11,7 @@
   ],
   "require": {
     "php": ">=7.2",
+    "ext-curl": "*",
     "php-curl-class/php-curl-class": "@dev",
     "devster/ubench": "2.0.0",
     "sirio3mil/tiberium-alliances-parser-distributed": "dev-master"

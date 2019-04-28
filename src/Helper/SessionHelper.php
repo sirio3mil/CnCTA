@@ -127,7 +127,8 @@ class SessionHelper
         $curl->setCookieJar($this->cookie);
         $curl->setOpts([
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_RETURNTRANSFER => true
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true
         ]);
         return $curl;
     }
@@ -143,25 +144,25 @@ class SessionHelper
         return true;
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function setSessionCookies()
     {
         $curl = $this->getCurlInstance();
-        $curl->setOpts([
-            CURLOPT_FOLLOWLOCATION => true
-        ]);
         $curl->get('https://www.tiberiumalliances.com/');
         $curl->close();
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function register()
     {
         $this->state = null;
         $this->execution = null;
         $this->loginUrl = null;
         $curl = $this->getCurlInstance();
-        $curl->setOpts([
-            CURLOPT_FOLLOWLOCATION => true
-        ]);
         $curl->get('https://www.tiberiumalliances.com/login/auth');
         /** @var CaseInsensitiveArray $headers */
         $headers = $curl->getRequestHeaders();
@@ -235,9 +236,6 @@ class SessionHelper
     {
         $curl = $this->getCurlInstance();
         $curl->setReferer($this->getLoginUrl());
-        $curl->setOpts([
-            CURLOPT_FOLLOWLOCATION => true
-        ]);
         $curl->post($this->getLoginUrl(), [
             'email' => $this->username,
             'password' => $password,
@@ -264,9 +262,6 @@ class SessionHelper
     {
         $curl = $this->getCurlInstance();
         $curl->setReferer('https://www.tiberiumalliances.com/login/auth');
-        $curl->setOpts([
-            CURLOPT_FOLLOWLOCATION => true
-        ]);
         $curl->get('https://www.tiberiumalliances.com/game/launch');
         $response = $curl->getResponse();
         if (preg_match('/sessionId\" value=\"([^"]+)"/', $response, $match)) {
