@@ -178,7 +178,7 @@ class SessionHelper
         $curl->get('https://www.tiberiumalliances.com/login/auth');
         /** @var CaseInsensitiveArray $headers */
         $headers = $curl->getRequestHeaders();
-        if ($headers->offsetExists('request-line')) {
+        if ($headers && $headers->offsetExists('request-line')) {
             $this->setLoginUrl($headers);
             $initReferer = SessionHelper::extractUrlPart($this->loginUrl, 'initref');
             $this->state = SessionHelper::extractUrlPart($initReferer, 'state');

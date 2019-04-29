@@ -23,6 +23,7 @@ class CurlHelper extends Curl
     public function setVerbose(bool $verbose): CurlHelper
     {
         $this->verbose = $verbose;
+        $this->verbose($verbose);
         return $this;
     }
 
