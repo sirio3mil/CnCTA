@@ -45,6 +45,6 @@ class SessionHelperTest extends TestCase
         $sessionHelper->resetSessionCookies();
         $sessionHelper->setSessionCookies();
         $sessionHelper->register();
-        $sessionHelper->login('#LeNtilla1');
+        $sessionHelper->login('');
     }
 }
