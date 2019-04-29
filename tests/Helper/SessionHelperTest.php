@@ -22,6 +22,7 @@ class SessionHelperTest extends TestCase
     public function testSetSessionCookies()
     {
         $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
+        $sessionHelper->resetSessionCookies();
         $sessionHelper->setSessionCookies();
         $this->assertFileExists($sessionHelper->getCookie());
         $this->assertRegexp('/JSESSIONID/', file_get_contents($sessionHelper->getCookie()));
@@ -30,6 +31,7 @@ class SessionHelperTest extends TestCase
     public function testRegister()
     {
         $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
+        $sessionHelper->resetSessionCookies();
         $sessionHelper->setSessionCookies();
         $sessionHelper->register();
         $this->assertNotEmpty($sessionHelper->getState());
@@ -40,6 +42,7 @@ class SessionHelperTest extends TestCase
     public function testLogin()
     {
         $sessionHelper = new SessionHelper('sirio3mil@gmail.com');
+        $sessionHelper->resetSessionCookies();
         $sessionHelper->setSessionCookies();
         $sessionHelper->register();
         $sessionHelper->login('#LeNtilla1');

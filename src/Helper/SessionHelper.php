@@ -74,9 +74,11 @@ class SessionHelper
         $this->username = $username;
         $this->verbose = false;
         $this->agent = implode(' ', [
-            'Mozilla/5.0 (Windows NT 6.3; WOW64)',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
             'AppleWebKit/537.36 (KHTML, like Gecko)',
-            'Chrome/35.0.1916.114 Safari/537.36'
+            'Chrome/75.0.3770.0',
+            'Safari/537.36',
+            'Edg/75.0.139.1'
         ]);
         $this->cookie = implode(DIRECTORY_SEPARATOR, [
             dirname(dirname(__DIR__)),
@@ -150,7 +152,7 @@ class SessionHelper
     public function setSessionCookies()
     {
         $curl = $this->getCurlInstance();
-        $curl->get('https://www.tiberiumalliances.com/');
+        $curl->get('https://www.tiberiumalliances.com/home');
         $curl->close();
     }
 
@@ -163,6 +165,16 @@ class SessionHelper
         $this->execution = null;
         $this->loginUrl = null;
         $curl = $this->getCurlInstance();
+        $curl->setReferer('https://www.tiberiumalliances.com/home');
+        $curl->setHeaders([
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Accept-Language' => 'en-US,en;q=0.9',
+            'Cache-Control' => 'max-age=0',
+            'Connection' => 'keep-alive',
+            'Host' => 'www.tiberiumalliances.com',
+            'Upgrade-Insecure-Requests' => '1'
+        ]);
         $curl->get('https://www.tiberiumalliances.com/login/auth');
         /** @var CaseInsensitiveArray $headers */
         $headers = $curl->getRequestHeaders();
@@ -182,7 +194,7 @@ class SessionHelper
     {
         $this->loginUrl = null;
         if ($headers->offsetExists('request-line')) {
-            $this->loginUrl = 'https://signin.ea.com' . substr($headers->offsetGet('request-line'),4);
+            $this->loginUrl = 'https://signin.ea.com' . trim(substr($headers->offsetGet('request-line'),4, -8));
         }
     }
 
@@ -210,7 +222,7 @@ class SessionHelper
     protected static function extractUrlPart(string $url, string $part): ?string
     {
         $urlParts = parse_url($url);
-        if ($urlParts) {
+        if ($urlParts && array_key_exists('query', $urlParts)) {
             parse_str($urlParts['query'], $output);
             if (!empty($output[$part])) {
                 return $output[$part];
@@ -236,6 +248,17 @@ class SessionHelper
     {
         $curl = $this->getCurlInstance();
         $curl->setReferer($this->getLoginUrl());
+        $curl->setHeaders([
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Accept-Language' => 'en-US,en;q=0.9',
+            'Cache-Control' => 'max-age=0',
+            'Connection' => 'keep-alive',
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'Host' => 'signin.ea.com',
+            'Origin' => 'https://signin.ea.com',
+            'Upgrade-Insecure-Requests' => '1'
+        ]);
         $curl->post($this->getLoginUrl(), [
             'email' => $this->username,
             'password' => $password,
@@ -249,6 +272,26 @@ class SessionHelper
             'isPhoneNumberLogin' => false,
             'isIncompletePhone' => ''
         ]);
+        $curl->close();
+        var_dump($curl->url);
+        var_dump($curl->getResponseHeaders());
+        var_dump($curl->getResponse());
+        die;
+        $curl = $this->getCurlInstance();
+        $curl->setReferer($this->getLoginUrl());
+        $curl->setHeaders([
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Accept-Language' => 'en-US,en;q=0.9',
+            'Connection' => 'keep-alive',
+            'Host' => 'signin.ea.com',
+            'Upgrade-Insecure-Requests' => '1'
+        ]);
+        $curl->setOpts([
+            CURLOPT_FOLLOWLOCATION => true
+        ]);
+        $curl->get($this->getLoginUrl() . '&_eventId=end');
+        var_dump($curl->url);
         var_dump($curl->getResponseHeaders());
         var_dump($curl->getResponse());
         $curl->close();

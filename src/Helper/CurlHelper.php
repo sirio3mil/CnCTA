@@ -43,6 +43,14 @@ class CurlHelper extends Curl
         } elseif ($this->error) {
             throw new Exception($this->errorMessage, $this->errorCode);
         }
+        /** @var CaseInsensitiveArray $headers */
+        $headers = $this->getResponseHeaders();
+        if($headers->offsetExists('content-encoding')){
+            $encoding = $headers->offsetGet('content-encoding');
+            if ($encoding == 'gzip'){
+                $this->response = gzdecode($this->response);
+            }
+        }
         $this->saveResponse();
         return $this->response;
     }
